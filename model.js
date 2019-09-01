@@ -30,11 +30,11 @@ class Model {
         this.optimizer.minimize(() => loss(this.model.predict(s), targetQ));
     }
 
-    async trainstep(count = 0) {
+    async trainstep(count = 0, num_steps = 99) {
         this.agent.init_state();
         let rAll = 0;
         let j = 0;
-        while (j < 99) {
+        while (j < num_steps) {
             j += 1;
 
             let s = tf.tidy(() => { return tf.tensor2d(this.agent.state.maze.tolist()).expandDims(-1).expandDims(0) });
@@ -91,12 +91,16 @@ class Model {
         return rAll / j;
     }
 
-    async train(num_episodes = 10) {
+    async train(num_episodes = 10, num_steps = 99) {
         for (let i = 0; i < num_episodes; i++) {
-            await this.trainstep(i);
-            console.log(tf.memory().numTensors);
+            await this.trainstep(i, num_steps);
         }
         return nj.array(this.rList).sum() / num_episodes;
+    }
+
+    trainHandler(num_episodes = 10, num_steps = 99) {
+        console.log(num_episodes, num_steps);
+        this.train(num_episodes, num_steps);
     }
 
 }
