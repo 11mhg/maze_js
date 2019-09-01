@@ -1,6 +1,7 @@
 class Model {
 
     constructor(agent, input_shape = [10, 10], actions = 4) {
+        tf.setBackend('webgl');
         this.agent = agent;
         const inp = tf.input({ shape: [input_shape[0], input_shape[1], 1] });
         const c1 = tf.layers.conv2d({
@@ -95,12 +96,13 @@ class Model {
         for (let i = 0; i < num_episodes; i++) {
             await this.trainstep(i, num_steps);
         }
-        return nj.array(this.rList).sum() / num_episodes;
+        let percent_solved = nj.array(this.rList).sum() / num_episodes;
+        document.getElementById("training_text").innerHTML = "Done! " + percent_solved;
+        return percent_solved;
     }
 
     trainHandler(num_episodes = 10, num_steps = 99) {
-        console.log(num_episodes, num_steps);
-        this.train(num_episodes, num_steps);
+        return this.train(num_episodes, num_steps);
     }
 
 }
