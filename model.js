@@ -82,7 +82,7 @@ class Model {
             })
 
             if (dist == 0) {
-                e = 1. / ((count / 50) + 10);
+                this.e = 1. / ((count / 50) + 10);
                 break;
             }
             await tf.nextFrame();
@@ -93,9 +93,19 @@ class Model {
     }
 
     async train(num_episodes = 10, num_steps = 99) {
+
+        try {
+            this.model = await tf.loadLayersModel('localstorage://model')
+        } catch (error) {
+            console.log("Model not found. Initialized model.");
+        }
+
         for (let i = 0; i < num_episodes; i++) {
             await this.trainstep(i, num_steps);
         }
+        console.log("Saving");
+        //await this.model.save('localstorage://model');
+        console.log("Saved");
         let percent_solved = nj.array(this.rList).sum() / num_episodes;
         document.getElementById("training_text").innerHTML = "Done! " + percent_solved;
         return percent_solved;
@@ -103,6 +113,42 @@ class Model {
 
     trainHandler(num_episodes = 10, num_steps = 99) {
         return this.train(num_episodes, num_steps);
+    }
+
+    testHandler(num_steps) {
+        return this.test(num_steps);
+    }
+
+    async test(num_steps) {
+
+        try {
+            this.model = await tf.loadLayersModel('localstorage://model')
+        } catch (error) {
+            console.log("Model not found. Initialized model.");
+        }
+
+        this.agent.x = this.agent.state.start_x;
+        this.agent.y = this.agent.state.start_y;
+        for (let i = 0; i < num_steps; i++) {
+            let s = tf.tidy(() => { return tf.tensor2d(this.agent.state.maze.tolist()).expandDims(-1).expandDims(0) });
+            let allQ = this.model.predict(s);
+            let a = tf.argMax(allQ, -1);
+            let a_val = await a.dataSync()[0];
+            let dist = this.agent.update(a_val);
+
+            tf.dispose({
+                s,
+                allQ,
+                a
+            })
+            if (dist == 0) {
+                break;
+            }
+            for (let j = 0; j < 10; j++) {
+                await tf.nextFrame();
+            }
+
+        }
     }
 
 }

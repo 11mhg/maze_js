@@ -5,3 +5,9 @@ function trainfunc() {
 
     agent.model.trainHandler(num_episodes, num_steps);
 }
+
+function testfunc() {
+    document.getElementById("training_text").innerHTML = "Testing.";
+
+    agent.model.testHandler(1000);
+}
